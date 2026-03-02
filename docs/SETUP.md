@@ -334,6 +334,22 @@ TypeScript frontend:
 Full configuration reference in
 [docs/REFERENCE.md](REFERENCE.md).
 
+## git hooks
+
+Install pre-commit and pre-push hooks:
+
+```bash
+uv run pre-commit install
+uv run pre-commit install --hook-type pre-push
+```
+
+This runs all linters at commit time and again before push.
+To run manually:
+
+```bash
+uv run pre-commit run --all-files
+```
+
 ## verify your setup
 
 ```bash

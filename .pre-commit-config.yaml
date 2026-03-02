@@ -1,6 +1,9 @@
 # Pre-commit hooks for code quality enforcement
 # Install: uv add --dev pre-commit && uv run pre-commit install
+# Pre-push: uv run pre-commit install --hook-type pre-push
 # Run: uv run pre-commit run --all-files
+
+default_stages: [pre-commit, pre-push]
 
 repos:
   - repo: local
