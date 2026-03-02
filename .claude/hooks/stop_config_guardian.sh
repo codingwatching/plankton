@@ -34,6 +34,7 @@ load_protected_files_from_config() {
   local config_file="${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/config.json"
   if [[ -f "${config_file}" ]] && command -v jaq >/dev/null 2>&1; then
     PROTECTED_FILES=()
+    # shellcheck disable=SC2312
     while IFS= read -r _pf; do
       [[ -z "${_pf}" ]] && continue
       PROTECTED_FILES+=("${_pf}")

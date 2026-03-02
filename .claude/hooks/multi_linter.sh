@@ -28,6 +28,20 @@
 set -euo pipefail
 trap 'kill 0' SIGTERM
 
+# Output JSON to stdout for Claude Code hook protocol.
+# PostToolUse hooks should return {"continue":true,"systemMessage":"..."}.
+# Called at meaningful exit points (post-linting) — early bail-outs skip this.
+# shellcheck disable=SC2329  # Called at exit points (wiring in progress)
+hook_json() {
+  local msg="${1:-}"
+  if [[ -n "${msg}" ]]; then
+    # shellcheck disable=SC2016 # $m is a jaq variable, not shell
+    jaq -n --arg m "${msg}" '{"continue":true,"systemMessage":$m}'
+  else
+    printf '{"continue":true}\n'
+  fi
+}
+
 # Fail-open if jaq is not installed (required for JSON parsing)
 if ! command -v jaq >/dev/null 2>&1; then
   echo "[hook] error: jaq is required but not found. Install: brew install jaq" >&2
@@ -264,6 +278,7 @@ is_excluded_from_security_linters() {
   fi
 
   local exclusion
+  # shellcheck disable=SC2312
   while IFS= read -r exclusion; do
     [[ -z "${exclusion}" ]] && continue
     if [[ "${fp}" == ${exclusion}* ]]; then
@@ -285,7 +300,7 @@ spawn_fix_subprocess() {
 
   # Model selection based on violation complexity
   local count
-  count=$(echo "${violations_json}" | jaq 'length' 2>/dev/null || echo "0")
+  count=$(echo "${violations_json}" | jaq 'length' 2>/dev/null | head -n1 || echo "0")
 
   local model=""
   local tier_max_turns=""
@@ -552,7 +567,7 @@ SETTINGS_EOF
   if [[ -n "${disallowed_tools}" ]]; then
     disallowed_flag=(--disallowedTools "${disallowed_tools}")
   fi
-  ${timeout_cmd} "${claude_cmd}" -p "${prompt}" \
+  ${timeout_cmd} env -u CLAUDECODE "${claude_cmd}" -p "${prompt}" \
     --dangerously-skip-permissions \
     --settings "${settings_file}" \
     "${disallowed_flag[@]}" \
@@ -666,14 +681,14 @@ rerun_phase2() {
       # Ruff violations
       local v
       v=$(ruff check --preview --output-format=json "${fp}" 2>/dev/null) || true
-      count=$(echo "${v}" | jaq 'length' 2>/dev/null || echo "0")
+      count=$(echo "${v}" | jaq 'length' 2>/dev/null | head -n1 || echo "0")
 
       # ty violations (uv run for project venv)
       if command -v uv >/dev/null 2>&1; then
         local ty_out
         ty_out=$(uv run ty check --output-format gitlab "${fp}" 2>/dev/null) || true
         local ty_count
-        ty_count=$(echo "${ty_out}" | jaq 'length' 2>/dev/null || echo "0")
+        ty_count=$(echo "${ty_out}" | jaq 'length' 2>/dev/null | head -n1 || echo "0")
         count=$((count + ty_count))
       fi
 
@@ -704,7 +719,7 @@ rerun_phase2() {
         local bandit_out
         bandit_out=$(uv run bandit -f json -q "${fp}" 2>/dev/null) || true
         local bandit_count
-        bandit_count=$(echo "${bandit_out}" | jaq '.results | length // 0' 2>/dev/null || echo "0")
+        bandit_count=$(echo "${bandit_out}" | jaq '.results | length // 0' 2>/dev/null | head -n1 || echo "0")
         count=$((count + bandit_count))
       fi
 
@@ -723,7 +738,7 @@ rerun_phase2() {
       if command -v shellcheck >/dev/null 2>&1; then
         local v
         v=$(shellcheck -f json "${fp}" 2>/dev/null) || true
-        count=$(echo "${v}" | jaq 'length' 2>/dev/null || echo "0")
+        count=$(echo "${v}" | jaq 'length' 2>/dev/null | head -n1 || echo "0")
       fi
       ;;
     yaml)
@@ -759,7 +774,7 @@ rerun_phase2() {
       if command -v hadolint >/dev/null 2>&1; then
         local v
         v=$(hadolint --no-color -f json "${fp}" 2>/dev/null) || true
-        count=$(echo "${v}" | jaq 'length' 2>/dev/null || echo "0")
+        count=$(echo "${v}" | jaq 'length' 2>/dev/null | head -n1 || echo "0")
       fi
       ;;
     typescript)
@@ -770,7 +785,7 @@ rerun_phase2() {
         biome_out=$( (cd "${CLAUDE_PROJECT_DIR:-.}" && ${_biome_cmd} lint --reporter=json "$(_biome_relpath "${fp}")") 2>/dev/null || true)
         if [[ -n "${biome_out}" ]]; then
           count=$(echo "${biome_out}" | jaq '[(.diagnostics // [])[] |
-            select(.severity == "error" or .severity == "warning")] | length' 2>/dev/null || echo "0")
+            select(.severity == "error" or .severity == "warning")] | length' 2>/dev/null | head -n1 || echo "0")
         fi
       fi
       ;;
@@ -808,7 +823,7 @@ _handle_semgrep_session() {
           ${semgrep_files} 2>/dev/null || true)
         if [[ -n "${semgrep_result}" ]]; then
           local finding_count
-          finding_count=$(echo "${semgrep_result}" | jaq '.results | length' 2>/dev/null || echo "0")
+          finding_count=$(echo "${semgrep_result}" | jaq '.results | length' 2>/dev/null | head -n1 || echo "0")
           if [[ "${finding_count}" -gt 0 ]]; then
             {
               echo ""
@@ -868,6 +883,8 @@ _validate_nursery_config() {
   local biome_nursery
   biome_nursery=$(jaq -r '.linter.rules.nursery // "off"' "${biome_json}" 2>/dev/null || echo "")
 
+  # Object-valued nursery is fully controlled by biome.json — string comparison not applicable
+  [[ "${biome_nursery}" == "{"* || "${biome_nursery}" == "["* ]] && return
   # Normalize: biome.json uses severity strings, config.json uses warn/error/off
   if [[ -n "${biome_nursery}" ]] && [[ "${biome_nursery}" != "null" ]] \
     && [[ "${config_nursery}" != "${biome_nursery}" ]]; then
@@ -955,7 +972,7 @@ handle_typescript() {
 
   if [[ -n "${biome_output}" ]]; then
     local diag_count
-    diag_count=$(echo "${biome_output}" | jaq '.diagnostics | length' 2>/dev/null || echo "0")
+    diag_count=$(echo "${biome_output}" | jaq '.diagnostics | length' 2>/dev/null | head -n1 || echo "0")
 
     if [[ "${diag_count}" -gt 0 ]]; then
       # Convert Biome diagnostics to standard format
@@ -985,7 +1002,7 @@ handle_typescript() {
       if [[ "${nursery_mode}" == "warn" ]]; then
         local nursery_count
         nursery_count=$(echo "${biome_output}" | jaq '[(.diagnostics // [])[] |
-          select(.category | startswith("lint/nursery/"))] | length' 2>/dev/null || echo "0")
+          select(.category | startswith("lint/nursery/"))] | length' 2>/dev/null | head -n1 || echo "0")
         if [[ "${nursery_count}" -gt 0 ]]; then
           echo "[hook:advisory] Biome nursery: ${nursery_count} diagnostic(s)" >&2
         fi
@@ -1432,7 +1449,7 @@ fi
 # Calculate model selection for debugging/testing
 # This runs before HOOK_SKIP_SUBPROCESS check so tests can verify model selection
 if [[ "${HOOK_DEBUG_MODEL:-}" == "1" ]]; then
-  count=$(echo "${collected_violations}" | jaq 'length' 2>/dev/null || echo "0")
+  count=$(echo "${collected_violations}" | jaq 'length' 2>/dev/null | head -n1 || echo "0")
 
   debug_has_opus_codes="false"
   if echo "${collected_violations}" | jaq -e '[.[] | select(.code | test("'"${OPUS_CODE_PATTERN}"'"))] | length > 0' >/dev/null 2>&1; then
@@ -1458,7 +1475,7 @@ fi
 # Testing mode: skip subprocess and report violations directly
 # Usage: HOOK_SKIP_SUBPROCESS=1 ./multi_linter.sh
 if [[ "${HOOK_SKIP_SUBPROCESS:-}" == "1" ]]; then
-  skip_count=$(echo "${collected_violations}" | jaq 'length' 2>/dev/null || echo "0")
+  skip_count=$(echo "${collected_violations}" | jaq 'length' 2>/dev/null | head -n1 || echo "0")
   if [[ "${skip_count}" -eq 0 ]]; then
     exit 0
   fi
