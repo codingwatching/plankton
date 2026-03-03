@@ -33,7 +33,7 @@ github_release_url() {
   local url="" attempt
   for attempt in 1 2; do
     url=$(curl -fsSL "https://api.github.com/repos/${repo}/releases/latest" \
-      | grep -o "\"browser_download_url\": \"[^\"]*${pattern}[^\"]*\"" \
+      | grep -o "\"browser_download_url\": *\"[^\"]*${pattern}[^\"]*\"" \
       | head -1 | cut -d'"' -f4 || true)
     [[ -n "${url}" ]] && break
     if [[ ${attempt} -eq 1 ]]; then
