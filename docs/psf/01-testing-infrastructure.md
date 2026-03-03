@@ -15,7 +15,7 @@
     markdown report generation
   - CI pipeline: pre-commit (lint) + pytest (test) on push/PR
 - **Test totals**: 113 + 28 + 10 + 20 + 133 + 11 = 315 hook checks
-  (+ 103 agent-based integration tests + 286 pytest tests)
+  (+ 103 agent-based integration tests + 297 pytest tests)
 - **Dependencies**: ShellCheck, ruff, jaq, yamllint, hadolint,
   taplo, markdownlint-cli2; biome optional
 
@@ -36,7 +36,7 @@
 - **Operating model**: Hook tests are bash scripts run locally
   or in CI; pytest unit tests cover the benchmark subsystem
   (see [02-benchmark-swebench.md](02-benchmark-swebench.md)
-  for the full 286-test breakdown)
+  for the full 297-test breakdown)
 
 ## System Overview
 
@@ -72,7 +72,7 @@ graph TB
     end
 
     subgraph "Layer 4: Unit Tests"
-        UT[pytest tests/unit/<br/>10 files, 256 tests, swebench coverage]
+        UT[pytest tests/unit/<br/>10 files, 267 tests, swebench coverage]
     end
 
     subgraph "Layer 5: CI"
@@ -99,7 +99,7 @@ graph TB
 
 ### test_hook.sh (Self-Test Suite)
 
-- **Location**: `.claude/hooks/test_hook.sh` (~1,495 lines)
+- **Location**: `.claude/hooks/test_hook.sh` (~2,012 lines)
 - **Invocation**: `bash .claude/hooks/test_hook.sh --self-test`
 - **Test count**: 113 pass / 0 fail
 - **Implementation**: `run_self_test()` orchestrates all tests
@@ -301,8 +301,8 @@ graph TB
 
 ## Risks, Tech Debt, Open Questions
 
-- **Pytest tests**: `tests/unit/` (10 files, 256 tests) +
-  `tests/integration/` (7 files, 30 tests) = 286 total;
+- **Pytest tests**: `tests/unit/` (10 files, 267 tests) +
+  `tests/integration/` (7 files, 30 tests) = 297 total;
   see [02-benchmark-swebench.md](02-benchmark-swebench.md)
   for per-file breakdown; hook testing remains shell-based
 - **Stress test size**: `run_stress_tests.sh` at 2,347 lines

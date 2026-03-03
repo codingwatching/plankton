@@ -165,7 +165,7 @@ graph TB
 
 ### multi_linter.sh (PostToolUse Hook)
 
-- **Location**: `.claude/hooks/multi_linter.sh` (~1,486 lines)
+- **Location**: `.claude/hooks/multi_linter.sh` (~1,606 lines)
 - **Responsibilities**:
   - Dispatches files to language-specific handlers based on extension
   - Runs three-phase lint: format, collect
@@ -209,7 +209,7 @@ graph TB
 
 ### config.json (Runtime Configuration)
 
-- **Location**: `.claude/hooks/config.json` (~116 lines)
+- **Location**: `.claude/hooks/config.json` (~91 lines)
 - **Responsibilities**: Central config for all hooks -
   language toggles, protected files, exclusions,
   phase control, model patterns, jscpd settings,
@@ -230,7 +230,7 @@ graph TB
 
 ### enforce_package_managers.sh (PreToolUse Hook)
 
-- **Location**: `.claude/hooks/enforce_package_managers.sh` (~485 lines)
+- **Location**: `.claude/hooks/enforce_package_managers.sh` (~512 lines)
 - **Responsibilities**: Intercepts legacy package manager
   commands in Bash tool and blocks or warns, suggesting
   project-preferred alternatives (uv for Python, bun for JS)
@@ -245,7 +245,7 @@ graph TB
 
 ### test_hook.sh (Debug/Test Utility)
 
-- **Location**: `.claude/hooks/test_hook.sh` (~1,495 lines)
+- **Location**: `.claude/hooks/test_hook.sh` (~2,012 lines)
 - **Responsibilities**: Self-test suite covering all
   file types, model selection, TS handling, config
   protection, and edge cases
@@ -334,7 +334,7 @@ CI pipeline, and 303+ automated checks.
 - **Quick reference**: `bash .claude/hooks/test_hook.sh --self-test`
   (113 cases), `bash .claude/tests/hooks/verify_feedback_loop.sh`
   (28 checks), `bash tests/stress/run_stress_tests.sh` (133 tests),
-  `.venv/bin/pytest tests/` (286 tests: 256 unit + 30 integration);
+  `.venv/bin/pytest tests/` (297 tests: 267 unit + 30 integration);
   hook investigation tests: `test_nursery_config.sh` (3 tests),
   `test_env_propagation.sh` (3 tests), `test_subprocess_permissions.sh` (5 tests)
 - **Type safety**: Python 3.11+; ty in Phase 2b;
@@ -390,7 +390,7 @@ CI pipeline, and 303+ automated checks.
 
 See [02-benchmark-swebench.md](02-benchmark-swebench.md)
 for the full benchmark PSF covering all 8 modules, the CLI,
-286 automated tests, and the A/B experiment protocol.
+297 automated tests, and the A/B experiment protocol.
 
 ## Supporting Files
 
