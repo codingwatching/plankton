@@ -243,7 +243,7 @@ install_js_tools() {
   # markdownlint-cli2 wrapper (bun global installs may not land on PATH)
   if ! command -v markdownlint-cli2 >/dev/null 2>&1; then
     info "Creating markdownlint-cli2 wrapper..."
-    printf '#!/bin/sh\nexec bunx markdownlint-cli2 "$@"\n' >"${BIN_DIR}/markdownlint-cli2"
+    printf '#!/bin/sh\nexec bunx markdownlint-cli2@0.17.2 "$@"\n' >"${BIN_DIR}/markdownlint-cli2"
     chmod +x "${BIN_DIR}/markdownlint-cli2"
     ok "markdownlint-cli2 (bunx wrapper)"
   else

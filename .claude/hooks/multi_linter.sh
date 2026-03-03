@@ -26,6 +26,13 @@
 #   2 - Issues remain after delegation attempt
 
 set -euo pipefail
+
+# Ensure Python venv tools are discoverable (uv sync installs to .venv/bin/)
+# On macOS tools are on PATH via brew; on Linux they're only in the venv.
+if [[ -d "${CLAUDE_PROJECT_DIR:-.}/.venv/bin" ]]; then
+  export PATH="${CLAUDE_PROJECT_DIR:-.}/.venv/bin:${PATH}"
+fi
+
 trap 'kill 0' SIGTERM
 
 # Output JSON to stdout for Claude Code hook protocol.

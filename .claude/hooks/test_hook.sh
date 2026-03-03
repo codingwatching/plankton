@@ -1873,6 +1873,41 @@ DIS_EOF
   fi
 
   echo ""
+  echo "--- Portability Tests ---"
+
+  # Structural: venv PATH prepend exists in multi_linter.sh (ISSUE 1 fix)
+  if grep -q 'CLAUDE_PROJECT_DIR.*\.venv/bin' "${script_dir}/multi_linter.sh"; then
+    echo "PASS venv_path_prepend: hook prepends .venv/bin to PATH"
+    passed=$((passed + 1))
+  else
+    echo "FAIL venv_path_prepend: missing venv PATH prepend (ISSUE 1)"
+    failed=$((failed + 1))
+  fi
+
+  # Structural: markdownlint-cli2 version pinned in setup.sh (ISSUE 2 fix)
+  if grep -q 'markdownlint-cli2@' "${script_dir}/../../scripts/setup.sh"; then
+    echo "PASS markdownlint_version_pin: bunx wrapper has version pin"
+    passed=$((passed + 1))
+  else
+    echo "FAIL markdownlint_version_pin: missing version pin in setup.sh (ISSUE 2)"
+    failed=$((failed + 1))
+  fi
+
+  # Structural: .gitignore includes .venv/, .ruff_cache/, .pytest_cache/
+  local gitignore_file="${script_dir}/../../.gitignore"
+  local gi_count=0
+  grep -q '^\.venv/' "${gitignore_file}" 2>/dev/null && gi_count=$((gi_count + 1))
+  grep -q '^\.ruff_cache/' "${gitignore_file}" 2>/dev/null && gi_count=$((gi_count + 1))
+  grep -q '^\.pytest_cache/' "${gitignore_file}" 2>/dev/null && gi_count=$((gi_count + 1))
+  if [[ "${gi_count}" -ge 3 ]]; then
+    echo "PASS gitignore_cache_dirs: .venv/, .ruff_cache/, .pytest_cache/ gitignored"
+    passed=$((passed + 1))
+  else
+    echo "FAIL gitignore_cache_dirs: missing cache dirs in .gitignore (${gi_count}/3)"
+    failed=$((failed + 1))
+  fi
+
+  echo ""
   echo "--- ShellCheck Compliance Tests ---"
 
   # Test: all hook scripts pass shellcheck
