@@ -82,9 +82,9 @@ Install everything at once:
 uv sync --all-extras --no-install-project
 ```
 
-Gotcha: bandit and security linters exclude tests/, docs/,
-and .venv/ by default. You can customize these paths via the
-`exclusions` array in `.claude/hooks/config.json`.
+Gotcha: Python security linters only exclude infrastructure paths by default
+(`.venv/`, `node_modules/`, `.git/`). You can customize these paths via the
+`security_linter_exclusions` array in `.claude/hooks/config.json`.
 
 ## typescript
 

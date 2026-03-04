@@ -37,21 +37,17 @@
     ".semgrep.yml",
     "knip.json"
   ],
-  "exclusions": [
-    "tests/",
-    "docs/",
+  "security_linter_exclusions": [
     ".venv/",
-    "scripts/",
     "node_modules/",
-    ".git/",
-    ".claude/"
+    ".git/"
   ],
   "phases": {
     "auto_format": true,
     "subprocess_delegation": true
   },
   "subprocess": {
-    "settings_file": "~/.claude/zai-settings.json"
+    "settings_file": ".claude/subprocess-settings.json"
   },
   "jscpd": {
     "session_threshold": 3,

@@ -42,10 +42,11 @@ command, no plugin, no config. Clone, setup, claude.
 > [!NOTE]
 > **Existing codebases:** the agent edits a file, Plankton enforces every
 > violation in it, pre-existing included. Messy files get cleaned up on first
-> touch. After that, they're fast. Scope it down with exclusions:
+> touch. After that, they're fast. Scope down Python security scanners if
+> needed:
 >
 > ```json
-> "exclusions": ["tests/", "legacy/", "vendor/", "node_modules/"]
+> "security_linter_exclusions": [".venv/", "vendor/", "node_modules/"]
 > ```
 
 **Recommended: disable Claude Code auto-updates.** Plankton depends on
@@ -125,6 +126,15 @@ For the full motivation and design story, read the
 # Install pre-commit hooks (optional but recommended)
 uv run pre-commit install
 
+# Optional: run a stricter local gate through pre-commit that reuses
+# Plankton's runtime file checks (deterministic only; Claude subprocess
+# delegation is intentionally disabled)
+make strict
+
+# Use PLANKTON_STRICT_ALLOW_PROTECTED=1 only when intentionally changing
+# protected linter or hook config files.
+make strict-protected FILES=".semgrep.yml"
+
 # Run the hook self-test suite
 .claude/hooks/test_hook.sh --self-test
 ```
@@ -169,7 +179,7 @@ shape how code is organized rather than how it looks.
 ## configuration
 
 `.claude/hooks/config.json` controls everything: language toggles, phase
-control, model routing patterns, protected files, exclusions, jscpd
+control, model routing patterns, protected files, security-linter exclusions, jscpd
 thresholds, package manager enforcement modes. If the file is missing, all
 features are enabled with sensible defaults. Environment variables
 (`HOOK_SKIP_SUBPROCESS=1`, `HOOK_SUBPROCESS_TIMEOUT`) override config values

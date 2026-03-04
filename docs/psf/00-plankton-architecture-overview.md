@@ -211,7 +211,7 @@ graph TB
 
 - **Location**: `.claude/hooks/config.json` (~91 lines)
 - **Responsibilities**: Central config for all hooks -
-  language toggles, protected files, exclusions,
+  language toggles, protected files, security-linter exclusions,
   phase control, model patterns, jscpd settings,
   package manager enforcement
 - **Implementation**: Loaded by `load_config()`;

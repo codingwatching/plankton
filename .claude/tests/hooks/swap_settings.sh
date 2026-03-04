@@ -77,7 +77,11 @@ cmd_status() {
   fi
 
   if [[ -f "${settings_file}" ]]; then
-    hook_cmd="$(grep -o '"command":\s*"[^"]*"' "${settings_file}" 2>/dev/null | head -1 || true)"
+    if command -v jaq >/dev/null 2>&1; then
+      hook_cmd="$(jaq -r '.hooks.PostToolUse[0].hooks[0].command // empty' "${settings_file}" 2>/dev/null || true)"
+    else
+      hook_cmd=""
+    fi
     if [[ -n "${hook_cmd}" ]]; then
       echo "PostToolUse hook: ${hook_cmd}"
     else

@@ -854,7 +854,7 @@ If the file is missing, all features are enabled with sensible defaults.
 | `…typescript.semgrep` | bool | true | Semgrep session scan for TS/JS |
 | `…typescript.knip` | bool | false | Enable Knip dead code detection |
 | `protected_files` | str[] | 14 configs | Linter configs protected from edits |
-| `exclusions` | str[] | tests/,… | Directories excluded from security linters |
+| `security_linter_exclusions` | str[] | .venv/,… | Directories excluded from Python security linters |
 | `phases.auto_format` | bool | true | Phase 1 auto-format |
 | `phases.subprocess_delegation` | bool | true | Phase 3 subprocess delegation |
 | `hook_enabled` | bool | true | Master kill switch (disables all linting) |

@@ -99,20 +99,26 @@ create_bad_shell_file "${test1_file}"
 test1_json='{"tool_input":{"file_path":"'"${test1_file}"'"}}'
 
 # Run the hook with mock claude on PATH
+test1_stdout=""
 test1_stderr=""
 test1_exit=0
-test1_stderr=$(echo "${test1_json}" \
+test1_stdout_file=$(mktemp)
+test1_stderr_file=$(mktemp)
+echo "${test1_json}" \
   | PATH="${test1_dir}/bin:${PATH}" \
     CLAUDE_PROJECT_DIR="${test1_dir}/project" \
     HOOK_SESSION_PID="test1_$$" \
-    bash "${hook_dir}/multi_linter.sh" 2>&1 >/dev/null) || test1_exit=$?
+    bash "${hook_dir}/multi_linter.sh" >"${test1_stdout_file}" 2>"${test1_stderr_file}" || test1_exit=$?
+test1_stdout=$(cat "${test1_stdout_file}")
+test1_stderr=$(cat "${test1_stderr_file}")
+rm -f "${test1_stdout_file}" "${test1_stderr_file}"
 
 assert "test1_exit" "[[ ${test1_exit} -eq 2 ]]" \
   "exit code 2" "exit code ${test1_exit} (expected 2)"
 
-assert "test1_stderr" "echo '${test1_stderr}' | grep -q 'violation(s) remain'" \
-  "stderr contains 'violation(s) remain'" \
-  "stderr missing 'violation(s) remain'"
+assert "test1_stdout" "echo '${test1_stdout}' | grep -q 'violation(s) in test.sh'" \
+  "stdout JSON contains remaining-violations message" \
+  "stdout JSON missing remaining-violations message"
 
 assert "test1_feedback_marker" \
   "echo '${test1_stderr}' | grep -q '\\[hook:feedback-loop\\]'" \
@@ -194,7 +200,7 @@ test3_json='{"tool_input":{"file_path":"'"${test3_file}"'"}}'
 # (e.g., /opt/homebrew/bin), so we cannot simply exclude directories.
 test3_bin="${test3_dir}/bin"
 mkdir -p "${test3_bin}"
-for cmd in jaq shellcheck shfmt bash cat grep sed wc mktemp mv rm mkdir touch cmp sort tr dirname tail head; do
+for cmd in jaq shellcheck shfmt bash basename cat grep sed wc mktemp mv rm mkdir touch cmp sort tr dirname tail head; do
   cmd_path=$(command -v "${cmd}" 2>/dev/null || true)
   if [[ -n "${cmd_path}" ]] && [[ -x "${cmd_path}" ]]; then
     ln -sf "${cmd_path}" "${test3_bin}/${cmd}"
@@ -202,14 +208,20 @@ for cmd in jaq shellcheck shfmt bash cat grep sed wc mktemp mv rm mkdir touch cm
 done
 # Explicitly do NOT symlink claude
 
+test3_stdout=""
 test3_stderr=""
 test3_exit=0
-test3_stderr=$(echo "${test3_json}" \
+test3_stdout_file=$(mktemp)
+test3_stderr_file=$(mktemp)
+echo "${test3_json}" \
   | PATH="${test3_bin}" \
     HOME="/nonexistent_home_$$" \
     CLAUDE_PROJECT_DIR="${test3_dir}/project" \
     HOOK_SESSION_PID="test3_$$" \
-    bash "${hook_dir}/multi_linter.sh" 2>&1 >/dev/null) || test3_exit=$?
+    bash "${hook_dir}/multi_linter.sh" >"${test3_stdout_file}" 2>"${test3_stderr_file}" || test3_exit=$?
+test3_stdout=$(cat "${test3_stdout_file}")
+test3_stderr=$(cat "${test3_stderr_file}")
+rm -f "${test3_stdout_file}" "${test3_stderr_file}"
 
 # spawn_fix_subprocess returns 0 when claude is not found (graceful skip).
 # The script continues to the verification phase, which exits 2 with
@@ -222,9 +234,9 @@ assert "test3_not_found" "echo '${test3_stderr}' | grep -q 'claude binary not fo
   "stderr contains 'claude binary not found'" \
   "stderr missing 'claude binary not found'"
 
-assert "test3_violations" "echo '${test3_stderr}' | grep -q 'violation(s) remain'" \
-  "stderr contains 'violation(s) remain'" \
-  "stderr missing 'violation(s) remain' (verification phase skipped)"
+assert "test3_violations" "echo '${test3_stdout}' | grep -q 'violation(s) in test.sh'" \
+  "stdout JSON contains remaining-violations message" \
+  "stdout JSON missing remaining-violations message"
 
 # ============================================================================
 # Test 4: subprocess delegation disabled

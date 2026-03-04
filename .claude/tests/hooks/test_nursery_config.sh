@@ -74,7 +74,7 @@ BIOME_EOF
     }
   },
   "phases": { "subprocess_delegation": false },
-  "exclusions": []
+  "security_linter_exclusions": []
 }
 CONFIG_EOF
 

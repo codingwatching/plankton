@@ -18,7 +18,7 @@ rules:
     patterns:
       - pattern-either:
           - pattern: $EL.innerHTML = $X
-          - pattern: dangerouslySetInnerHTML={{__html: $X}}
+          - pattern: 'dangerouslySetInnerHTML={{__html: $X}}'
     message: >
       Setting innerHTML or dangerouslySetInnerHTML with dynamic content
       enables XSS attacks. Use textContent or a sanitization library.

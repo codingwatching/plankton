@@ -112,6 +112,14 @@ repos:
         stages: [pre-commit]
         verbose: true
 
+      # === OPTIONAL: RUNTIME-PARITY STRICT CHECKS (manual only) ===
+      - id: plankton-strict-runtime
+        name: plankton (strict runtime parity)
+        entry: ./scripts/pre_commit_plankton_strict.sh
+        language: system
+        require_serial: true
+        stages: [manual]
+
 # === INTENTIONAL EXCLUSIONS ===
 # The following tools run in CC hooks and/or CI but NOT in pre-commit:
 # - markdownlint-cli2: pass_filenames=false causes it to scan gitignored docs/plans/

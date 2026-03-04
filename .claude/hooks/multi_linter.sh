@@ -96,10 +96,12 @@ is_language_enabled() {
   [[ "${enabled}" != "false" ]]
 }
 
-# Get exclusion patterns from config (defaults if not configured)
-get_exclusions() {
-  local defaults='["tests/","docs/",".venv/","scripts/","node_modules/",".git/",".claude/"]'
-  echo "${CONFIG_JSON}" | jaq -r ".exclusions // ${defaults} | .[]" 2>/dev/null
+# Get security-linter exclusion patterns from config (defaults if not configured).
+# Backward compatible: prefer security_linter_exclusions, fall back to legacy
+# exclusions if present.
+get_security_linter_exclusions() {
+  local defaults='[".venv/","node_modules/",".git/"]'
+  echo "${CONFIG_JSON}" | jaq -r ".security_linter_exclusions // .exclusions // ${defaults} | .[]" 2>/dev/null
 }
 
 # Detect and reject old flat config format
@@ -310,7 +312,7 @@ is_excluded_from_security_linters() {
     if [[ "${fp}" == ${exclusion}* ]]; then
       return 0
     fi
-  done < <(get_exclusions || true)
+  done < <(get_security_linter_exclusions || true)
   return 1
 }
 
